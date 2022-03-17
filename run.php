@@ -8,9 +8,9 @@ class Run {
         $this->password = $database[0]['password'];
     }
 
-    protected function serverConnect() {
+    private function serverConnect() {
         try {
-            return new PDO("mysql: host=$this->host", $this->user, $this->password,
+            return new PDO("mysql:host=$this->host; charset=utf8", $this->user, $this->password,
                 array(PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION));
         }
         catch(PDOException $e) {
@@ -20,15 +20,25 @@ class Run {
         }
     }
 
-    public function data() {
-        return $this->host;
+    private function databaseConnect() {
+        try {
+            return new PDO("mysql:host=$this->host; dbname=$this->dbname; charset=utf8", 
+                $this->user, $this->password);
+        }
+        catch(PDOException $e) {
+            print_r(json_encode([
+                'message' => "Erreur: la connexion à la base de données n'est pas établie. Merci !"
+            ], JSON_FORCE_OBJECT));
+        }
     }
 
     public function createDatabase() {
         try {
             $server = $this->serverConnect();
-            $server->exec("CREATE DATABASE $this->dbname");
+            $server->exec("CREATE DATABASE IF NOT EXISTS $this->dbname");
             $server = null;
+            echo "------------ La base de données est créée avec succès. --------------";
+            return 1;
         }
         catch(PDOException $e) {
             print_r(json_encode([
@@ -39,4 +49,4 @@ class Run {
 }
 
 $lahatra = new Run;
-$lahatra->data();
+$lahatra->createDatabase();
