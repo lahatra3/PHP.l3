@@ -23,7 +23,8 @@ class Run {
     private function databaseConnect() {
         try {
             return new PDO("mysql:host=$this->host; dbname=$this->dbname; charset=utf8", 
-                $this->user, $this->password);
+                $this->user, $this->password,
+                array(PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION));
         }
         catch(PDOException $e) {
             print_r(json_encode([
@@ -37,7 +38,7 @@ class Run {
             $server = $this->serverConnect();
             $server->exec("CREATE DATABASE IF NOT EXISTS $this->dbname");
             $server = null;
-            echo "------------ La base de données est créée avec succès. --------------";
+            echo ">>> La base de données est créée avec succès.\n";
             return 1;
         }
         catch(PDOException $e) {
@@ -46,7 +47,12 @@ class Run {
             ], JSON_FORCE_OBJECT));
         }
     }
+
+    public function createTable() {
+
+    }
 }
 
 $lahatra = new Run;
 $lahatra->createDatabase();
+
