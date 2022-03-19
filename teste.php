@@ -43,7 +43,7 @@ function explodeBy(array $nomColonnes) {
     return $colonnes;
 }
 
-function filtrage(string $nom, string $type) {
+function filtrage(string $nom, string $type, string $table) {
     if(preg_match('#^\*#', trim($nom))) {
         $nom = str_replace('*', '', $nom);
         $type = $type. ' NOT NULL';
@@ -62,28 +62,31 @@ function filtrage(string $nom, string $type) {
     if(preg_match('#^\##', trim($nom))) {
         $nom = str_replace('#', '', trim($nom));
         $tmp = explode('_', $nom);
-        $type = $type.', CONSTRAINT fk_'.trim($nom).'_lahatra 
+        $type = $type.', CONSTRAINT fk_'.trim($nom).'_'.$table.' 
             FOREIGN KEY('.trim($nom).') REFERENCES '.$tmp[1].'('.$tmp[0].')';
         $tmp = null;
     }
     return $nom.' '.$type;
 }
 
-function reqTable(array $colonne) {
+function reqTable(array $colonne, string $table) {
     $requeteTable = "";
     for ($i=0; $i < count($colonne) - 1; $i++) {
-        $requeteColonne = filtrage($colonne[$i][0], $colonne[$i][1]).',';
+        $requeteColonne = filtrage($colonne[$i][0], $colonne[$i][1], $table).',';
         $requeteTable = $requeteTable.''.$requeteColonne;
     }
-    $requeteColonne = filtrage($colonne[count($colonne) - 1][0], $colonne[count($colonne) - 1][1]);
+    $requeteColonne = filtrage($colonne[count($colonne) - 1][0], $colonne[count($colonne) - 1][1], $table);
     $requeteTable = $requeteTable.''.$requeteColonne;
     return $requeteTable;
 }
 
+$tables = dbStructureTables();
 $colonnes = dbStructureColonnes();
 $colonnes = explodeBy($colonnes);
 
-for ($i=0; $i < count($colonnes); $i++) { 
-    echo reqTable($colonnes[$i]);
+for ($i=0; $i < count($colonnes); $i++) {
+    $requete = 'CREATE TABLE IF NOT EXISTS '.$tables[$i].'('
+        .reqTable($colonnes[$i], $tables[$i]).') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;';
+    echo $requete;
     echo "\n";
 }

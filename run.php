@@ -6,6 +6,16 @@ class Run {
         $this->dbname = $database[0]['dbname'];
         $this->user = $database[0]['user'];
         $this->password = $database[0]['password'];
+        $i = 0;
+        foreach($database[1] as $cle => $valeur) {
+            $tables[$i] = $cle;
+            $colonnes[$i] = $valeur;
+            $i++;
+        }
+        $i = null;
+        $database = null;
+        $this->tables = $tables;
+        $this->colonnes = $colonnes;
     }
 
     private function serverConnect() {
@@ -33,10 +43,10 @@ class Run {
         }
     }
 
-    public function createDatabase() {
+    private function createDatabase() {
         try {
             $server = $this->serverConnect();
-            $server->exec("CREATE DATABASE IF NOT EXISTS $this->dbname");
+            $server->exec("CREATE DATABASE IF NOT EXISTS $this->dbname;");
             $server = null;
             echo ">>> La base de données est créée avec succès.\n";
             return 1;
@@ -48,11 +58,87 @@ class Run {
         }
     }
 
-    public function createTable() {
+    private function explodeColonnes() {
+        $colonnes = $this->colonnes;
+        for ($i=0; $i <count($colonnes) ; $i++) { 
+            $colonnes[$i] = explode(',', $colonnes[$i]);
+            for ($j=0; $j <count($colonnes[$i]) ; $j++) { 
+                $colonnes[$i][$j] = explode(':', $colonnes[$i][$j]);
+            }
+        }
+        return $colonnes;
+    }
 
+    private function filtrageConstraints(string $nom, string $type, string $table) {
+        if(preg_match('#^\*#', trim($nom))) {
+            $nom = str_replace('*', '', $nom);
+            $type = $type. ' NOT NULL';
+        }
+
+        if(preg_match("#^_#", trim($nom))) {
+            $nom = str_replace('_', '', $nom);
+            $type = $type.' PRIMARY KEY';
+        }
+
+        if(preg_match('#\+\+$#', trim($nom))) {
+            $nom = str_replace('+', '', $nom);
+            $type = $type.' AUTO_INCREMENT';
+        }
+    
+        if(preg_match('#^\##', trim($nom))) {
+            $nom = str_replace('#', '', trim($nom));
+            $tmp = explode('_', $nom);
+            $type = $type.', CONSTRAINT fk_'.trim($nom).'_'.$table.' FOREIGN KEY('.trim($nom).') REFERENCES '.$tmp[1].'('.$tmp[0].')';
+            $tmp = null;
+        }
+        return $nom.' '.$type;
+    }
+    
+    private function generateColonnes(array $colonnes, string $table) {
+        $myColonne = "";
+        for ($i=0; $i < count($colonnes) - 1; $i++) { 
+            $line = $this->filtrageConstraints($colonnes[$i][0], $colonnes[$i][1], $table).',';
+            $myColonne = $myColonne.''.$line;
+        }
+        $line = $this->filtrageConstraints($colonnes[count($colonnes) - 1][0], $colonnes[count($colonnes) - 1][1], $table);
+        return $myColonne.''.$line;
+    }
+
+    private function generateTables() {
+        $colonnes = $this->explodeColonnes();
+        $tables = $this->tables;
+        $requete = "";
+        for ($i=0; $i < count($tables); $i++) { 
+            $res = "CREATE TABLE IF NOT EXISTS ".$tables[$i]."("
+                .$this->generateColonnes($colonnes[$i], $tables[$i]).");";
+            $requete = $requete."\n".$res;
+        }
+        return $requete;
+    }
+
+    public function createDatabaseProject() {
+        try {
+            $createDB = $this->createDatabase();
+            if($createDB === 1) {
+                $database=$this->databaseConnect();
+                $database->exec("USE $this->dbname;");
+                $database->exec($this->generateTables());
+                $database = null;
+                echo ">>> Les tables sont créées avec succès. Merci !";
+            }
+            else {
+                throw new Exception("création de la base de données !");
+                exit;
+            }
+        }
+        catch(PDOException $e) {
+            print_r(json_encode([
+                'message' => "Erreur: ".$e->getMessage()
+            ], JSON_FORCE_OBJECT));
+        }
     }
 }
 
 $lahatra = new Run;
-$lahatra->createDatabase();
-
+$lahatra->createDatabaseProject();
+echo "\n";
