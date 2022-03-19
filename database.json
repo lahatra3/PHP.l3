@@ -5,8 +5,8 @@
         "user": "jitiy",
         "password": "01Lah_tr*@ro0t/*"
     }, {
-        "utilisateurs": "_id: int(11), nom: varchar(255), prenoms: varchar(255), email: varchar(255), keyword: varchar(255)",
-        "formations": "_id: int(11), nom: varchar(255), lieu: varchar(255), annee: varchar(255), #id_utilisateur: int(11)",
-        "experiences": "_id: int(11), organisations: varchar(255), types: varchar(255), annee: varchar(255), #id_utilisateur: int(11)"
+        "utilisateurs": "*_id++:int(11), *nom:varchar(255), *prenoms:varchar(255), *email:varchar(255), keyword:varchar(255)",
+        "formations": "*_id++:int(11), *nom:varchar(255), *lieu:varchar(255), *annee:varchar(255), descriptions:varchar(255), *#id_utilisateurs:int(11)",
+        "experiences": "*_id++:int(11), *organisations:varchar(255), *types:varchar(255), *annee:varchar(255), descriptions:varchar(255), *#id_utilisateurs:int(11)"
     }
 ]
