@@ -10,6 +10,7 @@
 
   **<u>Remarques:</u>**
   Les ordres de des clés sont importants sur les contraintes, et il faut les respecter...!
+  
     - *Exemples:*
       - *nom : nom NOT NULL,
       - _id : id PRIMARY KEY,
