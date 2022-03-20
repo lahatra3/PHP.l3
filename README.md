@@ -11,13 +11,12 @@
   **<u>Remarques:</u>**
   Les ordres de des clés sont importants sur les contraintes, et il faut les respecter...!
   
-    - *Exemples:*
+    Exemples:
       - *nom : nom NOT NULL,
       - _id : id PRIMARY KEY,
       - id : id AUTO_INCREMENT,
       - *_id : id NOT NULL PRIMARY KEY,
       - *_id++ : id NOT NULL AUTO_INCREMENT PRIMARY KEY,
       - #id_utilisateurs : CONSTRAINT fk_id_utilisateurs_(nom de la table) FOREING KEY id_utilisateurs REFERENCES utilisateurs(id)
-
 
 😊**PHP.lahatra3**🤓
