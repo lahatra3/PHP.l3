@@ -2,6 +2,7 @@
 class Run {
     public function __construct() {
         $database = json_decode(file_get_contents('./database.json'), true);
+        $this->databaseConnexion = $database[0];
         $this->host = $database[0]['host'];
         $this->dbname = $database[0]['dbname'];
         $this->user = $database[0]['user'];
@@ -137,8 +138,37 @@ class Run {
             ], JSON_FORCE_OBJECT));
         }
     }
+
+    private function jsonDBConnexion() {
+        return json_encode($this->databaseConnexion, JSON_FORCE_OBJECT);
+    }
+
+    private function writeFile($fichierPath, $texte) {
+        $fichierConnectDB = fopen($fichierPath, "w");
+        fwrite($fichierConnectDB, $texte);
+        fclose($fichierConnectDB);
+    }
+
+    public function createProject() {
+        try {
+            if(!is_dir('./api-'.$this->dbname)) {
+                mkdir('./api-'.$this->dbname.'/models', 0777, true);
+                mkdir('./api-'.$this->dbname.'/controllers', 0777, true);
+                $this->writeFile("./api-$this->dbname/models/db.json", $this->jsonDBConnexion());
+                $this->writeFile("./api-$this->dbname/.gitignore", "/models/db.json");
+            }
+        }
+        catch(PDOException $e) {
+            print_r(json_encode([
+                'message' => "Erreur: ".$e->getMessage()
+            ], JSON_FORCE_OBJECT));
+        }
+    }
 }
 
 $lahatra = new Run;
 $lahatra->createDatabaseProject();
+echo "\n";
+$lahatra->createProject();
+// echo $lahatra->jsonDBConnexion();
 echo "\n";

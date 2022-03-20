@@ -84,9 +84,32 @@ $tables = dbStructureTables();
 $colonnes = dbStructureColonnes();
 $colonnes = explodeBy($colonnes);
 
-for ($i=0; $i < count($colonnes); $i++) {
-    $requete = 'CREATE TABLE IF NOT EXISTS '.$tables[$i].'('
-        .reqTable($colonnes[$i], $tables[$i]).') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;';
-    echo $requete;
-    echo "\n";
-}
+// for ($i=0; $i < count($colonnes); $i++) {
+//     $requete = 'CREATE TABLE IF NOT EXISTS '.$tables[$i].'('
+//         .reqTable($colonnes[$i], $tables[$i]).') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;';
+//     echo $requete;
+//     echo "\n";
+// }
+
+
+/*
+    class Database {
+        public function __construct() {
+            $this->host = ;
+            $this->dbname = 'phpl3';
+            $this->user = 'jitiy';
+            $this->password = '****';
+        }
+
+        protected function db_connect() {
+            try {
+                return new PDO('mysql:$this->host')
+            }
+            catch(PDOException $e) {
+                print_r(json_encode([
+                    'message' => "Erreur: la connexion à base de données n'est pas établie. Merci !"
+                ], JSON_FORCE_OBJECT));
+            }
+        }
+    }
+*/
