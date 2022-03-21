@@ -140,7 +140,7 @@ class Run {
     }
 
     private function jsonDBConnexion() {
-        return json_encode($this->databaseConnexion, JSON_FORCE_OBJECT);
+        return json_encode($this->databaseConnexion, JSON_UNESCAPED_SLASHES);
     }
 
     private function writeFile($fichierPath, $texte) {
@@ -164,11 +164,47 @@ class Run {
             ], JSON_FORCE_OBJECT));
         }
     }
+
+    private function classModelDatabase() {
+        return '
+            class Database {
+                public function __construct() {
+                    $lahatra=json_decode(file_get_contents("./models/db.json"));
+                    $this->host = $lahatra->host;
+                    $this->dbname = $lahatra->dbname;
+                    $this->user = $lahatra->user;
+                    $this->password = $lahatra->password;
+                }
+
+                protected function db_connect(): object | string | bool {
+                    try {
+                        return new PDO("mysql:host=$this->host; dbname=$this->dbname; charset=utf8", $this->user,
+                            $this->password, array(PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION));
+                    }
+                    catch(PDOException $e) {
+                        print_r(json_encode([
+                            "message" => "Erreur: la connexion à la base de données n\'est pas établie. Merci!".$e->getMessage()
+                        ], JSON_UNESCAPED_SLASHES));
+                    }
+                }
+            }';
+        
+    }
+
+    public function classModelLogin() {
+        
+    }
+
+    public function createModel() {
+        if(is_dir('./api-'.$this->dbname.'/models')) {
+
+        }
+    }
 }
 
 $lahatra = new Run;
-$lahatra->createDatabaseProject();
-echo "\n";
-$lahatra->createProject();
-// echo $lahatra->jsonDBConnexion();
+// $lahatra->createDatabaseProject();
+// echo "\n";
+// $lahatra->createProject();
+echo $lahatra->classModelDatabase();
 echo "\n";
