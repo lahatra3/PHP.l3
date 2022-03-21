@@ -59,7 +59,7 @@ class Run {
         }
     }
 
-    private function explodeColonnes() {
+    private function explodeColonnes():array {
         $colonnes = $this->colonnes;
         for ($i=0; $i <count($colonnes) ; $i++) { 
             $colonnes[$i] = explode(',', $colonnes[$i]);
@@ -70,7 +70,7 @@ class Run {
         return $colonnes;
     }
 
-    private function filtrageConstraints(string $nom, string $type, string $table) {
+    private function filtrageConstraints(string $nom, string $type, string $table): string {
         if(preg_match('#^\*#', trim($nom))) {
             $nom = str_replace('*', '', $nom);
             $type = $type. ' NOT NULL';
@@ -95,13 +95,25 @@ class Run {
         return $nom.' '.$type;
     }
     
+    private function filtrageUnicite(string $type) {
+        if(preg_match("#\(unique\)#", $type)) {
+            $type = str_replace('(unique)', '', $type);
+            $type = $type.' UNIQUE';
+        }
+        if(preg_match("#\(key\)#", $type)) {
+            $type = str_replace('(key)', '', $type);
+        }
+        return $type;
+    }
+
     private function generateColonnes(array $colonnes, string $table) {
         $myColonne = "";
         for ($i=0; $i < count($colonnes) - 1; $i++) { 
-            $line = $this->filtrageConstraints($colonnes[$i][0], $colonnes[$i][1], $table).',';
+            $line = $this->filtrageConstraints($colonnes[$i][0], $this->filtrageUnicite($colonnes[$i][1]), $table).',';
             $myColonne = $myColonne.''.$line;
         }
-        $line = $this->filtrageConstraints($colonnes[count($colonnes) - 1][0], $colonnes[count($colonnes) - 1][1], $table);
+        $line = $this->filtrageConstraints($colonnes[count($colonnes) - 1][0], 
+            $this->filtrageUnicite($colonnes[count($colonnes) - 1][1]), $table);
         return $myColonne.''.$line;
     }
 
@@ -192,13 +204,54 @@ class Run {
     }
 
     public function classModelLogin() {
-        
+        $tables = '
+            class '.ucfirst($nomTbale).'
+        ';    
+    }
+
+    private function filtrageNomColonnes(string $nom) {
+        if(preg_match('#^\*#', trim($nom))) {
+            $nom = str_replace('*', '', $nom);
+        }
+
+        if(preg_match("#^_#", trim($nom))) {
+            $nom = str_replace('_', '', $nom);
+        }
+
+        if(preg_match('#\+\+$#', trim($nom))) {
+            $nom = str_replace('+', '', $nom);
+        }
+    
+        if(preg_match('#^\##', trim($nom))) {
+            $nom = str_replace('#', '', trim($nom));
+        }
+        return $nom;
+    }
+
+    private function generateNomColonnes(array $colonnes) {
+        $lines = "";
+        for ($i=0; $i < count($colonnes) - 1; $i++) { 
+            if(!preg_match("#\(key\)#", $colonnes[$i][1])) {
+                if($i!==count($colonnes) - 2) {
+                    $line = $this->filtrageNomColonnes($colonnes[$i][0]).',';
+                    $lines = $lines.''.$line;
+                }
+                else {
+                    $line = $this->filtrageNomColonnes($colonnes[$i][0]);
+                    $lines = $lines.''.$line;
+                }
+            }
+        }
+        if(!preg_match("#\(key\)#", $colonnes[count($colonnes) - 1][1])) {
+            $line = ', '.$this->filtrageNomColonnes($colonnes[count($colonnes) - 1][0]);
+            $lines = $lines.''.$line;
+        }
+        return $lines;
     }
 
     public function createModel() {
-        if(is_dir('./api-'.$this->dbname.'/models')) {
-
-        }
+        $colonnes = $this->explodeColonnes();
+        echo $this->generateNomColonnes($colonnes[0]);
     }
 }
 
@@ -206,5 +259,5 @@ $lahatra = new Run;
 // $lahatra->createDatabaseProject();
 // echo "\n";
 // $lahatra->createProject();
-echo $lahatra->classModelDatabase();
+echo $lahatra->createModel();
 echo "\n";
