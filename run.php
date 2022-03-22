@@ -112,7 +112,7 @@ class Run {
             $line = $this->filtrageConstraints($colonnes[$i][0], $this->filtrageUnicite($colonnes[$i][1]), $table).',';
             $myColonne = $myColonne.''.$line;
         }
-        $line = $this->filtrageConstraints($colonnes[count($colonnes) - 1][0], 
+            $line = $this->filtrageConstraints($colonnes[count($colonnes) - 1][0], 
             $this->filtrageUnicite($colonnes[count($colonnes) - 1][1]), $table);
         return $myColonne.''.$line;
     }
@@ -177,7 +177,26 @@ class Run {
         }
     }
 
-    private function classModelDatabase() {
+    private function filtrageNomColonnes(string $nom) {
+        if(preg_match('#^\*#', trim($nom))) {
+            $nom = str_replace('*', '', $nom);
+        }
+
+        if(preg_match("#^_#", trim($nom))) {
+            $nom = str_replace('_', '', $nom);
+        }
+
+        if(preg_match('#\+\+$#', trim($nom))) {
+            $nom = str_replace('+', '', $nom);
+        }
+    
+        if(preg_match('#^\##', trim($nom))) {
+            $nom = str_replace('#', '', $nom);
+        }
+        return trim($nom);
+    }
+
+    private function classModelDatabaseConnexion() {
         return '
             class Database {
                 public function __construct() {
@@ -203,55 +222,36 @@ class Run {
         
     }
 
-    public function classModelLogin() {
-        $tables = '
-            class '.ucfirst($nomTbale).'
-        ';    
-    }
-
-    private function filtrageNomColonnes(string $nom) {
-        if(preg_match('#^\*#', trim($nom))) {
-            $nom = str_replace('*', '', $nom);
-        }
-
-        if(preg_match("#^_#", trim($nom))) {
-            $nom = str_replace('_', '', $nom);
-        }
-
-        if(preg_match('#\+\+$#', trim($nom))) {
-            $nom = str_replace('+', '', $nom);
-        }
-    
-        if(preg_match('#^\##', trim($nom))) {
-            $nom = str_replace('#', '', trim($nom));
-        }
-        return $nom;
-    }
-
     private function generateNomColonnes(array $colonnes) {
         $lines = "";
-        for ($i=0; $i < count($colonnes) - 1; $i++) { 
+        for ($i=0; $i < count($colonnes); $i++) { 
             if(!preg_match("#\(key\)#", $colonnes[$i][1])) {
-                if($i!==count($colonnes) - 2) {
-                    $line = $this->filtrageNomColonnes($colonnes[$i][0]).',';
-                    $lines = $lines.''.$line;
-                }
-                else {
-                    $line = $this->filtrageNomColonnes($colonnes[$i][0]);
-                    $lines = $lines.''.$line;
-                }
+                $line = $this->filtrageNomColonnes($colonnes[$i][0]).',';
+                $lines = $lines.' '.$line;
             }
         }
-        if(!preg_match("#\(key\)#", $colonnes[count($colonnes) - 1][1])) {
-            $line = ', '.$this->filtrageNomColonnes($colonnes[count($colonnes) - 1][0]);
-            $lines = $lines.''.$line;
-        }
-        return $lines;
+        return rtrim($lines, ',');
     }
 
     public function createModel() {
         $colonnes = $this->explodeColonnes();
-        echo $this->generateNomColonnes($colonnes[0]);
+        $tables = $this->tables;
+        $nomClass = $this->classModelDatabaseConnexion();
+        for ($i=0; $i < count($colonnes); $i++) { 
+            $lines = '
+            class '.ucfirst($tables[$i]).' extends Database {
+                public function getAll'.ucfirst($tables[$i]).'() {
+                    $database=Database::db_connect();
+                    $demande=$database->query("SELECT '.$this->generateNomColonnes($colonnes[$i]).' 
+                        FROM '.ucfirst($tables[$i]).'");
+                    $reponses=$demande->fetchAll(PDO::FETCH_ASSOC);
+                    $demande->closeCursor();
+                    return $reponses;
+                }
+            }';
+            $nomClass = $nomClass."\n".$lines;
+        }
+        return $nomClass;
     }
 }
 
